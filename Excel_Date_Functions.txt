@@ -1,0 +1,199 @@
+Public Function LastSat(InputDate As Date, Optional MonthsToAdd As Integer)
+
+'   Returns the date of the last Sautrday of month, a specified number of months
+'   following a given date.
+
+    Dim TotalMonths As Integer
+    Dim NewMonth As Integer
+    Dim NewYear As Integer
+    Dim NewDay As Integer
+    Dim CurrDay As Integer
+    Dim EOMonth As Date
+
+    If IsMissing(MonthsToAdd) Then
+        MonthsToAdd = 0
+    End If
+
+    TotalMonths = Month(InputDate) + MonthsToAdd
+    NewMonth = TotalMonths - (12 * Int(TotalMonths / 12))
+    NewYear = Year(InputDate) + Int(TotalMonths / 12)
+
+    If NewMonth = 0 Then
+        NewMonth = 12
+        NewYear = NewYear - 1
+    End If
+
+    Select Case NewMonth
+        Case 1, 3, 5, 7, 8, 10, 12
+            EOMonth = DateSerial(NewYear, NewMonth, 31)
+        Case 4, 6, 9, 11
+            EOMonth = DateSerial(NewYear, NewMonth, 30)
+        Case 2
+            If Int(NewYear / 4) = NewYear / 4 Then
+                EOMonth = DateSerial(NewYear, NewMonth, 29)
+            Else
+                EOMonth = DateSerial(NewYear, NewMonth, 28)
+            End If
+    End Select
+
+    CurrDay = Weekday(EOMonth)
+    If CurrDay = 7 Then
+        LastSat = EOMonth
+    Else
+        LastSat = EOMonth - CurrDay
+    End If
+
+End Function
+
+Public Function LastDay(InputDate As Date, Optional MonthsToAdd = 0, Optional DayOfWeek = 7)
+
+'   This function does two things.  First it finds the last day of a month a given number of
+'   months after the input date.  It then will find the date of the last desired day of that
+'   month.  So you can use it to find the last Friday of a month three months following the
+'   input date.  Note the function defaults to the Last Saturday of the current month.
+
+    Dim TotalMonths As Integer
+    Dim NewMonth As Integer
+    Dim NewYear As Integer
+    Dim NewDay As Integer
+    Dim CurrDay As Integer
+    Dim EOMonth As Date
+
+    TotalMonths = Month(InputDate) + MonthsToAdd
+    NewMonth = TotalMonths - (12 * Int(TotalMonths / 12))
+    NewYear = Year(InputDate) + Int(TotalMonths / 12)
+
+    If NewMonth = 0 Then
+        NewMonth = 12
+        NewYear = NewYear - 1
+    End If
+
+    Select Case NewMonth
+        Case 1, 3, 5, 7, 8, 10, 12
+            EOMonth = DateSerial(NewYear, NewMonth, 31)
+        Case 4, 6, 9, 11
+            EOMonth = DateSerial(NewYear, NewMonth, 30)
+        Case 2
+            If Int(NewYear / 4) = NewYear / 4 Then
+                EOMonth = DateSerial(NewYear, NewMonth, 29)
+            Else
+                EOMonth = DateSerial(NewYear, NewMonth, 28)
+            End If
+    End Select
+   
+    CurrDay = Weekday(EOMonth)
+    LastDay = EOMonth
+   
+    Do While CurrDay <> DayOfWeek
+        LastDay = LastDay - 1
+        CurrDay = Weekday(LastDay)
+    Loop
+
+End Function
+
+Public Function FirstDay(InputDate As Date, Optional MonthsToAdd = 0, Optional DayOfWeek = 7)
+
+'   This function does two things.  First it finds the last day of a month a given number of
+'   months after the input date.  It then will find the date of the first desired day of the
+'   NEXT month.  So you can use it to find the first Friday of the following month three months
+'   from the input date.  Note the function defaults to the first Saturday of the current month.
+
+    Dim TotalMonths As Integer
+    Dim NewMonth As Integer
+    Dim NewYear As Integer
+    Dim NewDay As Integer
+    Dim CurrDay As Integer
+    Dim EOMonth As Date
+    Dim StartMonth As Date
+
+    MonthsToAdd = MonthsToAdd - 1
+    TotalMonths = Month(InputDate) + MonthsToAdd
+    NewMonth = TotalMonths - (12 * Int(TotalMonths / 12))
+    NewYear = Year(InputDate) + Int(TotalMonths / 12)
+
+    If NewMonth = 0 Then
+        NewMonth = 12
+        NewYear = NewYear - 1
+    End If
+
+    Select Case NewMonth
+        Case 1, 3, 5, 7, 8, 10, 12
+            EOMonth = DateSerial(NewYear, NewMonth, 31)
+        Case 4, 6, 9, 11
+            EOMonth = DateSerial(NewYear, NewMonth, 30)
+        Case 2
+            If Int(NewYear / 4) = NewYear / 4 Then
+                EOMonth = DateSerial(NewYear, NewMonth, 29)
+        Else
+            EOMonth = DateSerial(NewYear, NewMonth, 28)
+        End If
+    End Select
+   
+    StartMonth = EOMonth + 1
+    CurrDay = Weekday(StartMonth)
+    FirstDay = StartMonth
+
+    Do While CurrDay <> DayOfWeek
+        FirstDay = FirstDay + 1
+        CurrDay = Weekday(FirstDay)
+    Loop
+
+End Function
+
+Public Function DayName(InputDate As Date)
+
+'   This function just returns the text of the weekday name.
+'   I got tired of building if statements to do it.
+
+    Select Case Weekday(InputDate)
+        Case 4
+            DayName = "Wednesday"
+        Case 1
+            DayName = "Sunday"
+        Case 2
+            DayName = "Monday"
+        Case 3
+            DayName = "Tuesday"
+        Case 5
+            DayName = "Thursday"
+        Case 6
+            DayName = "Friday"
+        Case Else
+            DayName = "Saturday"
+    End Select
+
+End Function
+
+Public Function MonthName(InputDate As Date)
+
+'   This function just returns the text of the monthname.
+'   I got tired of building if statements to do it.
+
+    Select Case Month(InputDate)
+    Case 9
+        MonthName = "September"
+    Case 1
+        MonthName = "January"
+    Case 2
+        MonthName = "February"
+    Case 3
+        MonthName = "March"
+    Case 4
+        MonthName = "April"
+    Case 5
+        MonthName = "May"
+    Case 6
+        MonthName = "June"
+    Case 7
+        MonthName = "July"
+    Case 8
+        MonthName = "August"
+    Case 10
+        MonthName = "October"
+    Case 11
+        MonthName = "November"
+    Case Else
+        MonthName = "December"
+    End Select
+
+End Function

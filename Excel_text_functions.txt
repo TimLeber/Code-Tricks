@@ -1,0 +1,365 @@
+Public Function LEVENSHTEIN(s1 As String, s2 As String)
+
+'   This function will compare to strings and return a value for the number of
+'   edits required to change the first into the second.
+
+Dim i As Integer
+Dim j As Integer
+Dim l1 As Integer
+Dim l2 As Integer
+Dim d() As Integer
+Dim min1 As Integer
+Dim min2 As Integer
+
+s1 = UCase(s1)
+s2 = UCase(s2)
+l1 = Len(s1)
+l2 = Len(s2)
+ReDim d(l1, l2)
+For i = 0 To l1
+     d(i, 0) = i
+Next
+For j = 0 To l2
+     d(0, j) = j
+Next
+For i = 1 To l1
+     For j = 1 To l2
+         If Mid(s1, i, 1) = Mid(s2, j, 1) Then
+             d(i, j) = d(i - 1, j - 1)
+         Else
+             min1 = d(i - 1, j) + 1
+             min2 = d(i, j - 1) + 1
+             If min2 < min1 Then
+                 min1 = min2
+             End If
+             min2 = d(i - 1, j - 1) + 1
+             If min2 < min1 Then
+                 min1 = min2
+             End If
+             d(i, j) = min1
+         End If
+Next
+Next
+LEVENSHTEIN = d(l1, l2)
+End Function
+
+
+Function SOUNDEX(Surname As String) As String
+' Developed by Richard J. Yanco
+' This function follows the Soundex rules given at
+' http://home.utah-inter.net/kinsearch/Soundex.html
+'   edited to force string into upper case to minimize variation across string.
+
+    Dim Result As String, c As String * 1
+    Dim Location As Integer
+
+    Surname = UCase(Surname)
+
+'   First character must be a letter
+    If Asc(Left(Surname, 1)) < 65 Or Asc(Left(Surname, 1)) > 90 Then
+        SOUNDEX = ""
+        Exit Function
+    Else
+'       St. is converted to Saint
+        If Left(Surname, 3) = "ST." Then
+            Surname = "SAINT" & Mid(Surname, 4)
+        End If
+
+'       Convert to Soundex: letters to their appropriate digit,
+'                     A,E,I,O,U,Y ("slash letters") to slashes
+'                     H,W, and everything else to zero-length string
+
+        Result = Left(Surname, 1)
+        For Location = 2 To Len(Surname)
+            Result = Result & Category(Mid(Surname, Location, 1))
+        Next Location
+      
+'       Remove double letters
+        Location = 2
+        Do While Location < Len(Result)
+            If Mid(Result, Location, 1) = Mid(Result, Location + 1, 1) Then
+                Result = Left(Result, Location) & Mid(Result, Location + 2)
+            Else
+                Location = Location + 1
+            End If
+        Loop
+    
+'       If category of 1st letter equals 2nd character, remove 2nd character
+        If Category(Left(Result, 1)) = Mid(Result, 2, 1) Then
+            Result = Left(Result, 1) & Mid(Result, 3)
+        End If
+    
+'       Remove slashes
+        For Location = 2 To Len(Result)
+            If Mid(Result, Location, 1) = "/" Then
+                Result = Left(Result, Location - 1) & Mid(Result, Location + 1)
+            End If
+        Next
+    
+'       Trim or pad with zeroes as necessary
+        Select Case Len(Result)
+            Case 4
+                SOUNDEX = Result
+            Case Is < 4
+                SOUNDEX = Result & String(4 - Len(Result), "0")
+            Case Is > 4
+                SOUNDEX = Left(Result, 4)
+        End Select
+    End If
+End Function
+
+Private Function Category(c) As String
+'   Returns a Soundex code for a letter
+    Select Case True
+        Case c Like "[AEIOUY]"
+            Category = "/"
+        Case c Like "[BPFV]"
+            Category = "1"
+        Case c Like "[CSKGJQXZ]"
+            Category = "2"
+        Case c Like "[DT]"
+            Category = "3"
+        Case c = "L"
+            Category = "4"
+        Case c Like "[MN]"
+            Category = "5"
+        Case c = "R"
+            Category = "6"
+        Case Else 'This includes H and W, spaces, punctuation, etc.
+            Category = ""
+    End Select
+End Function
+
+Public Function LastSat(InputDate As Date, Optional MonthsToAdd As Integer)
+
+'   Returns the date of the last Sautrday of month, a specified number of months
+'   following a given date.
+
+    Dim TotalMonths As Integer
+    Dim NewMonth As Integer
+    Dim NewYear As Integer
+    Dim NewDay As Integer
+    Dim CurrDay As Integer
+    Dim EOMonth As Date
+
+    If IsMissing(MonthsToAdd) Then
+        MonthsToAdd = 0
+    End If
+
+    TotalMonths = Month(InputDate) + MonthsToAdd
+    NewMonth = TotalMonths - (12 * Int(TotalMonths / 12))
+    NewYear = Year(InputDate) + Int(TotalMonths / 12)
+
+    If NewMonth = 0 Then
+        NewMonth = 12
+        NewYear = NewYear - 1
+    End If
+
+    Select Case NewMonth
+        Case 1, 3, 5, 7, 8, 10, 12
+            EOMonth = DateSerial(NewYear, NewMonth, 31)
+        Case 4, 6, 9, 11
+            EOMonth = DateSerial(NewYear, NewMonth, 30)
+        Case 2
+            If Int(NewYear / 4) = NewYear / 4 Then
+                EOMonth = DateSerial(NewYear, NewMonth, 29)
+            Else
+                EOMonth = DateSerial(NewYear, NewMonth, 28)
+            End If
+    End Select
+
+    CurrDay = Weekday(EOMonth)
+    If CurrDay = 7 Then
+        LastSat = EOMonth
+    Else
+        LastSat = EOMonth - CurrDay
+    End If
+
+End Function
+
+Public Function LastDay(InputDate As Date, Optional MonthsToAdd = 0, Optional DayOfWeek = 7)
+
+'   This function does two things.  First it finds the last day of a month a given number of
+'   months after the input date.  It then will find the date of the last desired day of that
+'   month.  So you can use it to find the last Friday of a month three months following the
+'   input date.  Note the function defaults to the Last Saturday of the current month.
+
+    Dim TotalMonths As Integer
+    Dim NewMonth As Integer
+    Dim NewYear As Integer
+    Dim NewDay As Integer
+    Dim CurrDay As Integer
+    Dim EOMonth As Date
+
+    TotalMonths = Month(InputDate) + MonthsToAdd
+    NewMonth = TotalMonths - (12 * Int(TotalMonths / 12))
+    NewYear = Year(InputDate) + Int(TotalMonths / 12)
+
+    If NewMonth = 0 Then
+        NewMonth = 12
+        NewYear = NewYear - 1
+    End If
+
+    Select Case NewMonth
+        Case 1, 3, 5, 7, 8, 10, 12
+            EOMonth = DateSerial(NewYear, NewMonth, 31)
+        Case 4, 6, 9, 11
+            EOMonth = DateSerial(NewYear, NewMonth, 30)
+        Case 2
+            If Int(NewYear / 4) = NewYear / 4 Then
+                EOMonth = DateSerial(NewYear, NewMonth, 29)
+            Else
+                EOMonth = DateSerial(NewYear, NewMonth, 28)
+            End If
+    End Select
+   
+    CurrDay = Weekday(EOMonth)
+    LastDay = EOMonth
+   
+    Do While CurrDay <> DayOfWeek
+        LastDay = LastDay - 1
+        CurrDay = Weekday(LastDay)
+    Loop
+
+End Function
+
+Public Function FirstDay(InputDate As Date, Optional MonthsToAdd = 0, Optional DayOfWeek = 7)
+
+'   This function does two things.  First it finds the last day of a month a given number of
+'   months after the input date.  It then will find the date of the first desired day of the
+'   NEXT month.  So you can use it to find the first Friday of the following month three months
+'   from the input date.  Note the function defaults to the first Saturday of the current month.
+
+    Dim TotalMonths As Integer
+    Dim NewMonth As Integer
+    Dim NewYear As Integer
+    Dim NewDay As Integer
+    Dim CurrDay As Integer
+    Dim EOMonth As Date
+    Dim StartMonth As Date
+
+    MonthsToAdd = MonthsToAdd - 1
+    TotalMonths = Month(InputDate) + MonthsToAdd
+    NewMonth = TotalMonths - (12 * Int(TotalMonths / 12))
+    NewYear = Year(InputDate) + Int(TotalMonths / 12)
+
+    If NewMonth = 0 Then
+        NewMonth = 12
+        NewYear = NewYear - 1
+    End If
+
+    Select Case NewMonth
+        Case 1, 3, 5, 7, 8, 10, 12
+            EOMonth = DateSerial(NewYear, NewMonth, 31)
+        Case 4, 6, 9, 11
+            EOMonth = DateSerial(NewYear, NewMonth, 30)
+        Case 2
+            If Int(NewYear / 4) = NewYear / 4 Then
+                EOMonth = DateSerial(NewYear, NewMonth, 29)
+        Else
+            EOMonth = DateSerial(NewYear, NewMonth, 28)
+        End If
+    End Select
+   
+    StartMonth = EOMonth + 1
+    CurrDay = Weekday(StartMonth)
+    FirstDay = StartMonth
+
+    Do While CurrDay <> DayOfWeek
+        FirstDay = FirstDay + 1
+        CurrDay = Weekday(FirstDay)
+    Loop
+
+End Function
+
+Public Function DayName(InputDate As Date)
+
+'   This function just returns the text of the weekday name.
+'   I got tired of building if statements to do it.
+
+    Select Case Weekday(InputDate)
+        Case 4
+            DayName = "Wednesday"
+        Case 1
+            DayName = "Sunday"
+        Case 2
+            DayName = "Monday"
+        Case 3
+            DayName = "Tuesday"
+        Case 5
+            DayName = "Thursday"
+        Case 6
+            DayName = "Friday"
+        Case Else
+            DayName = "Saturday"
+    End Select
+
+End Function
+
+Public Function ShortDayName(InputDate As Date)
+
+'   This function just returns the text of the weekday name.
+'   I got tired of building if statements to do it.
+
+    Select Case Weekday(InputDate)
+        Case 1
+            ShortDayName = "Sun"
+        Case 2
+            ShortDayName = "Mon"
+        Case 3
+            ShortDayName = "Tue"
+        Case 4
+            ShortDayName = "Wed"
+        Case 5
+            ShortDayName = "Thu"
+        Case 6
+            ShortDayName = "Fri"
+        Case Else
+            ShortDayName = "Sat"
+    End Select
+
+End Function
+
+Public Function MonthName(InputDate As Date)
+
+'   This function just returns the text of the monthname.
+'   I got tired of building if statements to do it.
+
+    Select Case Month(InputDate)
+    Case 9
+        MonthName = "September"
+    Case 1
+        MonthName = "January"
+    Case 2
+        MonthName = "February"
+    Case 3
+        MonthName = "March"
+    Case 4
+        MonthName = "April"
+    Case 5
+        MonthName = "May"
+    Case 6
+        MonthName = "June"
+    Case 7
+        MonthName = "July"
+    Case 8
+        MonthName = "August"
+    Case 10
+        MonthName = "October"
+    Case 11
+        MonthName = "November"
+    Case Else
+        MonthName = "December"
+    End Select
+
+End Function
+
+Function QFormat(String1 As String)
+
+'   This function will put a single quote around a string
+'   to be fed into a query, yeah it's easy enough but I got
+'   tired of messing with it.
+
+    QFormat = "'" & String1 & "'" & ","
+    
+End Function
